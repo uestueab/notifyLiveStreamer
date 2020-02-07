@@ -1,14 +1,22 @@
+#!/usr/bin/env python3
+#
+# author:   Ablakim Giray Üstün
+# date:     Sat 04 Jan 2020 07:38:00 PM CET
+#
+# descr:
+
 import json
 import requests
 import notify2
 import os
+import urllib.request
 
 
 class Streamer():
 
     def __init__(self):
         # The file that contains those streamers that you want to be notified of when they go online!
-        self.favStreamerFile = ''
+        self.favStreamerFile = '/tmp/streamer.txt'
         self.notifcationIcon = ''
         self.favoriteStreamers = ["arteezy","zai","eternalenvyy","bububu","grandgrant","masondota2","purgegamers"]
         self.headers = {
@@ -23,7 +31,12 @@ class Streamer():
         response = requests.get('https://api.twitch.tv/kraken/streams/followed', headers=self.headers)
         data = json.loads(response.text)  # dictionary dump
 
-        self.liveStreamers = list(map(lambda d: { "streamer": d['channel']['name'], "display_name": d['channel']['display_name'], }, data['streams']))
+        self.liveStreamers = list(map(lambda d: {
+                                "streamer":     d['channel']['name'],
+                                "display_name": d['channel']['display_name'],
+                                "game":         d['channel']['game'],
+                                "status":       d['channel']['status'],
+                                }, data['streams']))
 
     def createFavStreamerFile(self):
         if not os.path.exists(self.favStreamerFile):
@@ -65,20 +78,20 @@ class Streamer():
 
         notify2.init('Twitch Streamer Notify')
 
-        for s in self.liveStreamers:
-            if s["streamer"] in self.favoriteStreamers:
-                with open(self.favStreamerFile,'r+') as f:
-                    self.favStreamerLive = f.readlines()
-                    self.favStreamerLive = [streamer.replace('\n','') for streamer in self.favStreamerLive] # error on
+        with open(self.favStreamerFile,'r+') as f:
+            for s in self.liveStreamers:
+                if s["streamer"] in self.favoriteStreamers:
+                        self.favStreamerLive = f.readlines()
+                        self.favStreamerLive = [streamer.replace('\n','') for streamer in self.favStreamerLive] # error on
 
-                    if s["streamer"] not in self.favStreamerLive: # streamer was not found in file -> streamer is new
-                        n = notify2.Notification("{} is online!".format(s['display_name']),
-                                 "visit twitch.tv/{}".format(s['streamer']),
-                                 self.notifcationIcon
-                                 )
-                        n.show()
-                        f.write(s['streamer'] + '\n')
-                    f.close()
+                        if s["streamer"] not in self.favStreamerLive: # streamer was not found in file -> streamer is new
+                            n = notify2.Notification("{} is online!".format(s['display_name']),
+                                     "Playing: {}\n{}".format(s['game'],s['status']),
+                                     self.notifcationIcon
+                                     )
+                            n.show()
+                            f.write(s['streamer'] + '\n')
+            f.close()
 
 # The main function
 if __name__== "__main__":
