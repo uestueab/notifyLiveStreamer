@@ -18,7 +18,18 @@ class Streamer():
         # The file that contains those streamers that you want to be notified of when they go online!
         self.favStreamerFile = '/tmp/streamer.txt'
         self.notifcationIcon = ''
-        self.favoriteStreamers = ["arteezy","zai","eternalenvyy","bububu","grandgrant","masondota2","purgegamers"]
+        self.favoriteStreamers = [
+                                    "arteezy",
+                                    "bububu",
+                                    "eternalenvyy",
+                                    "grandgrant",
+                                    "masondota2",
+                                    "matumbaman",
+                                    "midone",
+                                    "purgegamers",
+                                    "zai"
+                                 ]
+
         self.headers = {
                         'Accept':        'application/vnd.twitchtv.v5+json',
                         'Client-ID':     '',
@@ -76,22 +87,21 @@ class Streamer():
 
     def notifyOnlineStreamer(self):
 
-        notify2.init('Twitch Streamer Notify')
+        for s in self.liveStreamers:
+            if s["streamer"] in self.favoriteStreamers:
+                with open(self.favStreamerFile,'r+') as f:
+                    self.favStreamerLive = f.readlines()
+                    self.favStreamerLive = [streamer.replace('\n','') for streamer in self.favStreamerLive] # error on
 
-        with open(self.favStreamerFile,'r+') as f:
-            for s in self.liveStreamers:
-                if s["streamer"] in self.favoriteStreamers:
-                        self.favStreamerLive = f.readlines()
-                        self.favStreamerLive = [streamer.replace('\n','') for streamer in self.favStreamerLive] # error on
+                    if s["streamer"] not in self.favStreamerLive: # streamer was not found in file -> streamer is new
+                        n = notify2.Notification("{} is online!".format(s['display_name']),
+                                    "Playing: {}\n{}".format(s['game'],s['status']),
+                                    self.notifcationIcon
+                                    )
+                        n.show()
+                        f.write(s['streamer'] + '\n')
+                    f.close()
 
-                        if s["streamer"] not in self.favStreamerLive: # streamer was not found in file -> streamer is new
-                            n = notify2.Notification("{} is online!".format(s['display_name']),
-                                     "Playing: {}\n{}".format(s['game'],s['status']),
-                                     self.notifcationIcon
-                                     )
-                            n.show()
-                            f.write(s['streamer'] + '\n')
-            f.close()
 
 # The main function
 if __name__== "__main__":
