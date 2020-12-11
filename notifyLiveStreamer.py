@@ -17,9 +17,8 @@ class Streamer():
     def __init__(self):
         # The file that contains those streamers that you want to be notified of when they go online!
         self.favStreamerFile = '/tmp/streamer.txt'
-        self.notifcationIcon = '/home/geeray/media/wallpapers/icons/cute.png'
+        self.notifcationIcon = ''
         self.favoriteStreamers = [
-                                    "epicenter_en1",
                                     "arteezy",
                                     "bububu",
                                     "eternalenvyy",
@@ -28,7 +27,6 @@ class Streamer():
                                     "matumbaman",
                                     "midone",
                                     "purgegamers",
-                                    "singsing",
                                     "zai"
                                  ]
 
@@ -45,13 +43,11 @@ class Streamer():
         data = json.loads(response.text)  # dictionary dump
 
         self.liveStreamers = list(map(lambda d: {
-                                "display_name": d['channel']['display_name'],
                                 "streamer":     d['channel']['name'],
+                                "display_name": d['channel']['display_name'],
                                 "game":         d['channel']['game'],
-                                "onlineSince":   d['created_at'],
                                 "status":       d['channel']['status'],
                                 }, data['streams']))
-
 
     def createFavStreamerFile(self):
         if not os.path.exists(self.favStreamerFile):
@@ -67,7 +63,7 @@ class Streamer():
             # read/writable load favorite streams from file
             with open(self.favStreamerFile,'r+') as f:
                 self.favStreamerLive = f.readlines()
-                self.favStreamerLive = [fav for fav in self.favStreamerLive]
+                self.favStreamerLive = [streamer.replace('\n','') for streamer in self.favStreamerLive]
 
                 # put values from each streamer dictionary to a list
                 # so that we can iterate over them
@@ -77,14 +73,10 @@ class Streamer():
                 f.seek(0)
                 f.truncate()
 
-
-
-
-                # print([x.split(' ')[0] for x in self.favStreamerLive])
                 # write the streamer to file again only if they're still among the live streamers
-                for fav in self.favStreamerLive:
-                    if fav.split(" ")[0] in liveStreamersList:
-                        f.write(fav)
+                for s in self.favStreamerLive:
+                    if s in liveStreamersList:
+                        f.write(s + '\n')
                     else:
                         n = notify2.Notification("{} is offline!".format(s),
                                  "see you soon..".format(s),
@@ -95,37 +87,19 @@ class Streamer():
 
     def notifyOnlineStreamer(self):
 
-        notify2.init('Twitch Streamer Notify')
-        streamInfo = ""
-
         for s in self.liveStreamers:
             if s["streamer"] in self.favoriteStreamers:
                 with open(self.favStreamerFile,'r+') as f:
                     self.favStreamerLive = f.readlines()
-                    self.favStreamerLive = [streamer for streamer in self.favStreamerLive] # error on
+                    self.favStreamerLive = [streamer.replace('\n','') for streamer in self.favStreamerLive] # error on
 
-
-                    if s["streamer"] not in [f.split(" ",1)[0] for f in self.favStreamerLive]: # streamer was not found in file -> streamer is new
+                    if s["streamer"] not in self.favStreamerLive: # streamer was not found in file -> streamer is new
                         n = notify2.Notification("{} is online!".format(s['display_name']),
                                     "Playing: {}\n{}".format(s['game'],s['status']),
                                     self.notifcationIcon
                                     )
                         n.show()
-
-                        for key, value in s.items():
-                            if key == "display_name":
-                                continue
-
-                            elif key == "game":
-                                value = "".join(value.split())
-
-
-                            streamInfo += value +  " "
-
-                        f.write(streamInfo + '\n')
-                        streamInfo = ""
-
-
+                        f.write(s['streamer'] + '\n')
                     f.close()
 
 
