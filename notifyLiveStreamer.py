@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 #
-# author:   Ablakim Giray Üstün
 # date:     Sat 04 Jan 2020 07:38:00 PM CET
 #
 # descr:
